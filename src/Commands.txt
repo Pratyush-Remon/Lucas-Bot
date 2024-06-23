@@ -1,0 +1,7 @@
+**Lucas Commands**
+-----------------------------------------
+:tools: = Under development
+:white_check_mark: = Working perfectly 
+-----------------------------------------
+lhelp - To list working commands [:white_check_mark:]
+lregister - To create a Loony Points Account [:tools:]

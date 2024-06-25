@@ -4,4 +4,4 @@
 :white_check_mark: = Working perfectly 
 -----------------------------------------
 lhelp - To list working commands [:white_check_mark:]
-lregister - To create a Loony Points Account [:tools:]
+lregister - To create a Loony Points Account [:white_check_mark:]

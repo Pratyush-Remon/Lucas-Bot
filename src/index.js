@@ -1,14 +1,18 @@
-require('dotenv').config();
+// Import necessary modules
+import { config } from 'dotenv';
+import { createClient } from '@supabase/supabase-js';
+import { Client, IntentsBitField, Message, userMention } from 'discord.js';
+import { promises as fs } from 'fs'; // Using promises API for modern async handling
+import { Console } from 'console';
+
+// Load environment variables from .env file
+config({ path: './src/.env' });
+
+// Initialize Supabase client
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_KEY;
 const botToken = process.env.BOT_TOKEN;
-
-
-const { createClient } = require('@supabase/supabase-js');
-const supaClient = createClient(supabaseUrl,supabaseKey)
-const { Client, IntentsBitField, userMention } = require('discord.js');
-const fs = require('fs');
-const { register } = require('module');
+const supaClient = createClient(supabaseUrl, supabaseKey);
 
 // Create a new client instance with necessary intents
 const client = new Client({
@@ -20,47 +24,61 @@ const client = new Client({
     ]
 });
 
-client.on("ready", () => {
+// Function to test Supabase connection
+async function testSupabaseConnection() {
+    try {
+        const { data, error } = await supaClient
+            .from('loonies') // Replace 'loonies' with your actual table name
+            .select('*')
+            .limit(1);
+
+        if (error) {
+            console.error('Supabase connection error:', error);
+        } else {
+            console.log('Supabase connection successful. Data:', data);
+        }
+    } catch (err) {
+        console.error('Unexpected error:', err);
+    }
+}
+
+// Event handler for when the bot is ready
+client.on('ready', () => {
     console.log(`Logged in as ${client.user.tag}!`);
     testSupabaseConnection();
 });
 
-client.on("messageCreate", msg => {
-  if(msg.channel.id === "1254223958702690375" && msg.content === "lregister"){
-    userID=msg.author.id;
-    msg.reply(userMention(userID)+"You are registered");
-  }
-  if(msg.channel.id === "1254223958702690375" && msg.content === "lhelp"){
-
-    fs.readFile("src/Commands.txt","utf8",(err,commadls)=>{
-
-      if (err) {
-        console.error("Error reading the command list:", err);
-        return;
+// Event handler for message creation
+client.on('messageCreate', async msg => {
+    if (msg.channel.id === '1254223958702690375' && msg.content === 'lregister') {
+        const userID = msg.author.id;
+        createUser(userID,msg);
       }
-      msg.reply(commadls);
 
-    });
-
-  }
+    if (msg.channel.id === '1254223958702690375' && msg.content === 'lhelp') {
+        try {
+            const commandList = await fs.readFile('src/Commands.txt', 'utf8');
+            msg.reply(commandList);
+        } catch (err) {
+            console.error('Error reading the command list:', err);
+        }
+    }
 });
 
-async function testSupabaseConnection() {
-  try {
-    const { data, error } = await supaClient
-      .from('loonies') // Replace 'your_table_name' with your actual table name
-      .select('*')
-      .limit(1);
+//Function to create user
 
-    if (error) {
-      console.error('Supabase connection error:', error);
-    } else {
-      console.log('Supabase connection successful. Data:', data);
+async function createUser(uid,msg){
+  var ID = uid.toString();
+  const { data, error } = await supaClient
+    .from('Users')
+    .insert([{ userID: ID }]);
+    if(error && error.code==='23505'){
+      msg.reply("User already registered");
     }
-  } catch (err) {
-    console.error('Unexpected error:', err);
+    else {
+    msg.reply('User registered successfully'+userMention(uid));
   }
 }
 
-
+// Login to Discord
 client.login(botToken).catch(console.error);
